@@ -8,6 +8,9 @@
 import AVFoundation
 import FFmpegKit
 import Libavformat
+#if canImport(VideoToolbox)
+import VideoToolbox
+#endif
 
 public class FFmpegAssetTrack: MediaPlayerTrack {
     public private(set) var trackID: Int32 = 0
@@ -217,6 +220,13 @@ public class FFmpegAssetTrack: MediaPlayerTrack {
             let format = AVPixelFormat(rawValue: codecpar.format)
             bitDepth = format.bitDepth
             let fullRange = codecpar.color_range == AVCOL_RANGE_JPEG
+            let usesNativeDolbyVision: Bool
+            #if canImport(VideoToolbox)
+            usesNativeDolbyVision = dovi?.supportsNativeVideoToolboxDecode == true
+                && VTIsHardwareDecodeSupported(kCMVideoCodecType_DolbyVisionHEVC)
+            #else
+            usesNativeDolbyVision = false
+            #endif
             let dic: NSMutableDictionary = [
                 kCVImageBufferChromaLocationBottomFieldKey: kCVImageBufferChromaLocation_Left,
                 kCVImageBufferChromaLocationTopFieldKey: kCVImageBufferChromaLocation_Left,
@@ -226,7 +236,11 @@ public class FFmpegAssetTrack: MediaPlayerTrack {
             ]
             // kCMFormatDescriptionExtension_BitsPerComponent
             if let atomsData {
-                dic[kCMFormatDescriptionExtension_SampleDescriptionExtensionAtoms] = [codecType.rawValue.avc: atomsData]
+                var atoms = [codecType.rawValue.avc: atomsData]
+                if usesNativeDolbyVision, let dovi {
+                    atoms[dovi.configurationAtomKey] = dovi.configurationAtomData
+                }
+                dic[kCMFormatDescriptionExtension_SampleDescriptionExtensionAtoms] = atoms
             }
             dic[kCVPixelBufferPixelFormatTypeKey] = format.osType(fullRange: fullRange)
             dic[kCVImageBufferPixelAspectRatioKey] = sar.aspectRatio
@@ -234,7 +248,8 @@ public class FFmpegAssetTrack: MediaPlayerTrack {
             dic[kCVImageBufferTransferFunctionKey] = codecpar.color_trc.transferFunction as String?
             dic[kCVImageBufferYCbCrMatrixKey] = codecpar.color_space.ycbcrMatrix as String?
             // swiftlint:disable line_length
-            _ = CMVideoFormatDescriptionCreate(allocator: kCFAllocatorDefault, codecType: codecType.rawValue, width: codecpar.width, height: codecpar.height, extensions: dic, formatDescriptionOut: &formatDescriptionOut)
+            let mediaSubType = usesNativeDolbyVision ? kCMVideoCodecType_DolbyVisionHEVC : codecType.rawValue
+            _ = CMVideoFormatDescriptionCreate(allocator: kCFAllocatorDefault, codecType: mediaSubType, width: codecpar.width, height: codecpar.height, extensions: dic, formatDescriptionOut: &formatDescriptionOut)
             // swiftlint:enable line_length
             if let name = av_get_pix_fmt_name(format) {
                 formatName = String(cString: name)
@@ -277,6 +292,10 @@ public class FFmpegAssetTrack: MediaPlayerTrack {
 }
 
 extension FFmpegAssetTrack {
+    var usesNativeDolbyVision: Bool {
+        formatDescription?.mediaSubType.rawValue == kCMVideoCodecType_DolbyVisionHEVC
+    }
+
     var pixelFormatType: OSType? {
         let format = AVPixelFormat(codecpar.format)
         return format.osType(fullRange: formatDescription?.fullRangeVideo ?? false)

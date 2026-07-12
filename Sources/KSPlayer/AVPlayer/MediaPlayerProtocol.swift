@@ -159,6 +159,54 @@ public struct DOVIDecoderConfigurationRecord {
     public let el_present_flag: UInt8
     public let bl_present_flag: UInt8
     public let dv_bl_signal_compatibility_id: UInt8
+
+    public init(dv_version_major: UInt8, dv_version_minor: UInt8, dv_profile: UInt8, dv_level: UInt8, rpu_present_flag: UInt8, el_present_flag: UInt8, bl_present_flag: UInt8, dv_bl_signal_compatibility_id: UInt8) {
+        self.dv_version_major = dv_version_major
+        self.dv_version_minor = dv_version_minor
+        self.dv_profile = dv_profile
+        self.dv_level = dv_level
+        self.rpu_present_flag = rpu_present_flag
+        self.el_present_flag = el_present_flag
+        self.bl_present_flag = bl_present_flag
+        self.dv_bl_signal_compatibility_id = dv_bl_signal_compatibility_id
+    }
+}
+
+public extension DOVIDecoderConfigurationRecord {
+    /// The ISO/IEC 23008-2 Dolby Vision configuration record, without its ISOBMFF box header.
+    var configurationAtomData: Data {
+        var data = Data(repeating: 0, count: 24)
+        data[0] = dv_version_major
+        data[1] = dv_version_minor
+        data[2] = ((dv_profile & 0x7F) << 1) | ((dv_level & 0x3F) >> 5)
+        data[3] = ((dv_level & 0x1F) << 3)
+            | ((rpu_present_flag & 0x01) << 2)
+            | ((el_present_flag & 0x01) << 1)
+            | (bl_present_flag & 0x01)
+        data[4] = (dv_bl_signal_compatibility_id & 0x0F) << 4
+        return data
+    }
+
+    /// The atom key used by the Dolby Vision sample entry.
+    var configurationAtomKey: String {
+        if dv_profile > 10 {
+            return "dvwC"
+        } else if dv_profile > 7 {
+            return "dvvC"
+        } else {
+            return "dvcC"
+        }
+    }
+
+    /// Profiles that Apple VideoToolbox can receive as a single HEVC access unit.
+    var supportsNativeVideoToolboxDecode: Bool {
+        dv_profile == 5 || dv_profile == 8
+    }
+
+    /// Profile 7 is decoded as its base layer when no enhancement-layer pipeline is available.
+    var usesBaseLayerFallback: Bool {
+        dv_profile == 7
+    }
 }
 
 public enum FFmpegFieldOrder: UInt8 {

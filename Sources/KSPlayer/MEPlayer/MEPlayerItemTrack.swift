@@ -303,7 +303,8 @@ extension SyncPlayerItemTrack {
             if mediaType == .subtitle {
                 return SubtitleDecode(assetTrack: assetTrack, options: options)
             } else {
-                if mediaType == .video, options.asynchronousDecompression, options.hardwareDecode,
+                if mediaType == .video, options.hardwareDecode,
+                   (options.asynchronousDecompression || assetTrack.usesNativeDolbyVision),
                    let session = DecompressionSession(assetTrack: assetTrack, options: options)
                 {
                     return VideoToolboxDecode(options: options, session: session)
