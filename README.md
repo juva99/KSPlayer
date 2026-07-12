@@ -37,6 +37,7 @@ To experience the powerful features of the LGPL version, you can download the ap
 |Blu-ray disc(ISO、DVD) playback on all Apple platforms|💰|❌|
 |Simultaneous playback of separate audio and video URLs|💰|❌|
 |Offline AI real-time subtitle generation and translation|💰|❌|
+|ProAVPlayer supports MKV and native Dolby Atmos.|💰|❌|
 |KSMEPlayer supports MKV and native Dolby Vision (P5/P8 on supported hardware).|✅|✅|
 |Native Dolby Vision dynamic metadata (P5/P8); P7 falls back to its base layer.|✅|✅|
 |Play videos in a small window in the App (resumable, supports iOS and tvOS)|💰|❌|
