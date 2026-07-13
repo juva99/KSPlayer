@@ -30,16 +30,15 @@ jobs:
         run: swift build --sdk `xcrun -sdk xrsimulator -show-sdk-path` -Xswiftc -target -Xswiftc x86_64-apple-xros1.0-simulator
       - name: Validate Kodi sample catalog
         run: swift test --filter KodiSampleCatalogTests/testCatalogContainsAllRequestedSamples
-      - name: Test Kodi VP9 HDR10+ sample
+      - name: Test Kodi ProRes HDR MKV sample
         env:
-          KODI_SAMPLE_URL: https://storage.googleapis.com/downloads.webmproject.org/vp9/decoder-test-streams/HDR10%2B_Sample%5FVideo.webm
+          KODI_SAMPLE_URL: https://storage.googleapis.com/media.webmproject.org/devsite/vp9/hdr-encoding/strobe%5Fscientist.mkv
           KSPLAYER_KODI_SAMPLES_DIRECTORY: ${{ runner.temp }}/kodi-fixtures
-          KSPLAYER_KODI_SAMPLE_IDS: vp9-p2-hdr10plus
+          KSPLAYER_KODI_SAMPLE_IDS: prores-hdr-strobe-scientist
         run: |
           mkdir -p "$KSPLAYER_KODI_SAMPLES_DIRECTORY"
-          curl --fail --location --retry 3 --output "$RUNNER_TEMP/vp9-p2-hdr10plus.webm" "$KODI_SAMPLE_URL"
-          ffprobe -v error -show_streams -of json "$RUNNER_TEMP/vp9-p2-hdr10plus.webm"
-          ffmpeg -hide_banner -loglevel warning -y -ss 0 -i "$RUNNER_TEMP/vp9-p2-hdr10plus.webm" -t 3 -map 0 -c copy -avoid_negative_ts make_zero "$KSPLAYER_KODI_SAMPLES_DIRECTORY/vp9-p2-hdr10plus-3s.webm"
+          ffprobe -v error -show_streams -of json "$KODI_SAMPLE_URL"
+          ffmpeg -hide_banner -loglevel warning -y -ss 0 -i "$KODI_SAMPLE_URL" -t 3 -map 0 -c copy -avoid_negative_ts make_zero "$KSPLAYER_KODI_SAMPLES_DIRECTORY/prores-hdr-strobe-scientist-3s.mkv"
           swift test --filter KodiSampleCatalogTests/testSelectedLocalKodiSamplesOpen
       - name: Test
         run: swift test -v
