@@ -9,7 +9,10 @@ final class HDR10MKVFixtureTests: XCTestCase {
 
     @MainActor
     func testPhoneRecordedHDR10MKV() {
-        let url = Bundle(for: type(of: self)).url(forResource: "hdr10-h264-4k", withExtension: "mkv")!
+        guard let url = Bundle.module.url(forResource: "hdr10-h264-4k", withExtension: "mkv") else {
+            XCTFail("The HDR10 MKV fixture is missing from the test bundle")
+            return
+        }
         let options = KSOptions()
         options.videoDisable = true
 
