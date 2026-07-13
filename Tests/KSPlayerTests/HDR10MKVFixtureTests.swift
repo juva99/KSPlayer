@@ -14,7 +14,6 @@ final class HDR10MKVFixtureTests: XCTestCase {
             return
         }
         let options = KSOptions()
-        options.videoDisable = true
 
         let player = KSMEPlayer(url: url, options: options)
         self.player = player
