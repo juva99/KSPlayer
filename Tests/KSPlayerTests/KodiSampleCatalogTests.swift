@@ -1,4 +1,5 @@
 @testable import KSPlayer
+import CoreMedia
 import Foundation
 import XCTest
 
@@ -39,6 +40,9 @@ final class KodiSampleCatalogTests: XCTestCase {
             player.prepareToPlay()
             waitForExpectations(timeout: 15)
             XCTAssertTrue(player.isReadyToPlay, "Could not open \(sample.name)")
+            if sample.id == "vp9-p2-hdr10plus" {
+                XCTAssertEqual(player.tracks(mediaType: .video).first { $0.isEnabled }?.codecType, kCMVideoCodecType_VP9)
+            }
             player.shutdown()
             self.player = nil
             readyExpectation = nil
